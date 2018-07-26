@@ -41,7 +41,7 @@ function imageConfig(cxt,url){
     var img = new Image();
     img.src = url;
     img.onload = function(){
-      disX = 500
+      disX = (WINDOW_WIDTH/2)-25
       disY = 160
       width = 50
       height = 50
@@ -117,6 +117,7 @@ function scaleImage(cxt,img,speedX,speedY){
         render( cxt )
         drawImage(cxt,img)
         num = 0
+        updatePersonal(cxt)
         return
     }
     setTimeout(function(){
@@ -162,13 +163,17 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
             var imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
             console.log('imgUrl', imgUrl)
             imageConfig(cxt,imgUrl)
+          }else{
+            setTimeout(function(){
+              getImageList(cxt)
+            },1000)
           }
       }
     };
     xhr.send();
 }
 
-function updatePersonal(){            //动画播放后,更新签到人员信息
+function updatePersonal(cxt){            //动画播放后,更新签到人员信息
     var xhr = new XMLHttpRequest();
     var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?UpDatameetingSign&id='
     xhr.open('GET', url, true);
@@ -177,7 +182,7 @@ function updatePersonal(){            //动画播放后,更新签到人员信息
       if (xhr.readyState == 4 && xhr.status == 200) { 
           console.log('res', xhr.responseText)
           var json = JSON.parse(xhr.responseText)
-          
+          getImageList(cxt)
       }
     };
     xhr.send();
