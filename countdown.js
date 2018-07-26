@@ -3,6 +3,8 @@ var WINDOW_HEIGHT = 768;
 var RADIUS = 40;
 var MARGIN_TOP = 180;
 var MARGIN_LEFT = 150;
+var arr = []
+var index = 0
 
 var num = 0
 var disX = 500
@@ -23,7 +25,7 @@ window.onload = function(){
 }
 
 function render( cxt ){
-
+    arr = []
     renderDigit( MARGIN_LEFT , MARGIN_TOP , 0 , cxt );
     renderDigit( MARGIN_LEFT+11*RADIUS , MARGIN_TOP , 1 , cxt );
 }
@@ -37,6 +39,8 @@ function imageConfig(cxt){
       width = 50
       height = 50
       num = 0
+      index = parseInt(Math.random()*arr.length)
+      console.log('index',index,arr[index])
       updateImage(cxt,img);
     }
 }
@@ -44,12 +48,13 @@ function imageConfig(cxt){
 function renderDigit( x , y , num , cxt ){
 
     cxt.fillStyle = "#ffffff";
-
     for( var i = 0 ; i < digit[num].length ; i ++ )
         for(var j = 0 ; j < digit[num][i].length ; j ++ )
             if( digit[num][i][j] == 1 ){
                 cxt.beginPath();
                 cxt.fillRect(x+j*RADIUS,y+i*RADIUS,RADIUS-1,RADIUS-1);
+                let array = [x+j*RADIUS,y+i*RADIUS]
+                arr.push(array)
                 cxt.closePath();
                 cxt.fill();
             }
@@ -70,7 +75,11 @@ function updateImage(cxt,img){
     drawImage(cxt,img)
     if(num>=200){
         num = 0
-        scaleImage(cxt,img)
+        var speedX = (arr[index][0] - disX)/150
+        var speedY = (arr[index][1] - disY)/150
+        console.log('speedx',speedX)
+        console.log('speedY',speedY)
+        scaleImage(cxt,img,speedX,speedY)
         return
     }
     setTimeout(function(){
@@ -79,19 +88,19 @@ function updateImage(cxt,img){
     },20)
 }
 
-function scaleImage(cxt,img){
+function scaleImage(cxt,img,speedX,speedY){
     cxt.clearRect(0,0,canvas.width,canvas.height)
     render( cxt )
     width = width-5
     height = height-5
-    disY = disY - 1
-    disX = disX - 1
+    disY = disY + speedY
+    disX = disX - speedX
     drawImage(cxt,img)
-    if(num>=130){
+    if(num>=150){
         width = 40
         height = 40
-        disX = 190
-        disY = 180
+        disX = arr[index][0]
+        disY = arr[index][1]
         cxt.clearRect(0,0,canvas.width,canvas.height)
         render( cxt )
         drawImage(cxt,img)
