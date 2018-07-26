@@ -1,8 +1,10 @@
 var WINDOW_WIDTH = 1200;
 var WINDOW_HEIGHT = 768;
 var RADIUS = 40;
-var MARGIN_TOP = 180;
+var MARGIN_TOP = 220;
 var MARGIN_LEFT = 150;
+var bacUrl = '';
+var bacText = '';
 var arr = []
 var index = 0
 
@@ -13,26 +15,31 @@ var width = 10
 var height = 10
 var timer = null
 window.onload = function(){
-
+    WINDOW_WIDTH = window.screen.width
+    WINDOW_HEIGHT =  window.screen.height
     var canvas = document.getElementById('canvas');
     var context = canvas.getContext("2d");
 
     canvas.width = WINDOW_WIDTH;
     canvas.height = WINDOW_HEIGHT;
-
-    render( context )
-    imageConfig(context)
+    getBacImage(context)
 }
 
 function render( cxt ){
     arr = []
+    var image = new Image()
+    image.src = bacUrl
+    cxt.drawImage(image,0,0,canvas.width,canvas.height)
     renderDigit( MARGIN_LEFT , MARGIN_TOP , 0 , cxt );
     renderDigit( MARGIN_LEFT+11*RADIUS , MARGIN_TOP , 1 , cxt );
+    renderDigit( MARGIN_LEFT+2*11*RADIUS , MARGIN_TOP , 2 , cxt );
+    renderDigit( MARGIN_LEFT+3*11*RADIUS , MARGIN_TOP , 3 , cxt );
+    updateText(cxt)
 }
 
-function imageConfig(cxt){
+function imageConfig(cxt,url){
     var img = new Image();
-    img.src = './img/logo.jpg';
+    img.src = url;
     img.onload = function(){
       disX = 500
       disY = 160
@@ -60,6 +67,11 @@ function renderDigit( x , y , num , cxt ){
             }
 }
 
+function updateText(cxt){
+   cxt.font="30px Arial";
+   var text = '共 26 人签到';
+   cxt.fillText(text,260,95);
+}
 
 function drawImage(cxt,img){
   cxt.drawImage(img,disX,disY,width,height)
@@ -94,7 +106,7 @@ function scaleImage(cxt,img,speedX,speedY){
     width = width-5
     height = height-5
     disY = disY + speedY
-    disX = disX - speedX
+    disX = disX + speedX
     drawImage(cxt,img)
     if(num>=150){
         width = 40
@@ -110,5 +122,64 @@ function scaleImage(cxt,img,speedX,speedY){
     setTimeout(function(){
        num++
        scaleImage(cxt,img)
-    },0)
+    },10)
 }
+
+function getBacImage(cxt){
+    var xhr = new XMLHttpRequest();
+    var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?GetmeetingData&id=402881106487dbbe016487f91e8e0026'
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      // readyState == 4说明请求已完成
+      if (xhr.readyState == 4 && xhr.status == 200) { 
+          console.log('res', xhr.responseText)
+          var params = JSON.parse(xhr.responseText)
+          bacUrl = 'http://www.yixuelin.cn/yixuelin/upload/qiandao/' + params.bgimg
+          bacText = params.bgname
+          var image = new Image()
+          image.src = bacUrl
+          image.onload = function(){
+            render( cxt )
+            getImageList(cxt)
+          }
+      }
+    };
+    xhr.send();
+}
+
+
+function getImageList(cxt){                //(签到未播放动画的人员信息)
+   var xhr = new XMLHttpRequest();
+    var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?GetmeetingSign&id=402881106487dbbe016487f91e8e0026'
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      // readyState == 4说明请求已完成
+      if (xhr.readyState == 4 && xhr.status == 200) { 
+          var res = JSON.parse(xhr.responseText)
+          res = JSON.parse(res)
+          console.log('res', res)
+          if(res.length>0){
+            var imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
+            console.log('imgUrl', imgUrl)
+            imageConfig(cxt,imgUrl)
+          }
+      }
+    };
+    xhr.send();
+}
+
+function updatePersonal(){            //动画播放后,更新签到人员信息
+    var xhr = new XMLHttpRequest();
+    var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?UpDatameetingSign&id='
+    xhr.open('GET', url, true);
+    xhr.onreadystatechange = function() {
+      // readyState == 4说明请求已完成
+      if (xhr.readyState == 4 && xhr.status == 200) { 
+          console.log('res', xhr.responseText)
+          var json = JSON.parse(xhr.responseText)
+          
+      }
+    };
+    xhr.send();
+}
+
