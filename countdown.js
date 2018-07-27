@@ -3,10 +3,13 @@ var WINDOW_HEIGHT = 768;
 var RADIUS = 40;
 var MARGIN_TOP = 220;
 var MARGIN_LEFT = 150;
-var bacUrl = '';
-var bacText = '';
+var bacUrl = '';    //背景图
+var bacText = '';   //背景文字
 var arr = []
 var index = 0
+var signId = ''  //签到id
+var personalImg = []    //用于存放所有已签到头像信息
+var imgUrl = ''         //当前签到用户
 
 var num = 0
 var disX = 500
@@ -34,7 +37,8 @@ function render( cxt ){
     renderDigit( MARGIN_LEFT+11*RADIUS , MARGIN_TOP , 1 , cxt );
     renderDigit( MARGIN_LEFT+2*11*RADIUS , MARGIN_TOP , 2 , cxt );
     renderDigit( MARGIN_LEFT+3*11*RADIUS , MARGIN_TOP , 3 , cxt );
-    updateText(cxt)
+    updatePersonalImg(cxt);
+    updateText(cxt);
 }
 
 function imageConfig(cxt,url){
@@ -60,7 +64,7 @@ function renderDigit( x , y , num , cxt ){
             if( digit[num][i][j] == 1 ){
                 cxt.beginPath();
                 cxt.fillRect(x+j*RADIUS,y+i*RADIUS,RADIUS-1,RADIUS-1);
-                let array = [x+j*RADIUS,y+i*RADIUS]
+                var array = [x+j*RADIUS,y+i*RADIUS]
                 arr.push(array)
                 cxt.closePath();
                 cxt.fill();
@@ -72,6 +76,15 @@ function updateText(cxt){
    var text = '共 26 人签到';
    cxt.fillText(text,260,95);
 }
+
+function updatePersonalImg(cxt){               //重新绘制已签到人员信息
+  for(var i = 0;i<personalImg.length;i++){
+    var imgobj = new Image()
+    imgobj.src = personalImg[i].url
+    cxt.drawImage(imgobj,personalImg[i].disX,personalImg[i].disY,40,40)
+  }
+}
+
 
 function drawImage(cxt,img){
   cxt.drawImage(img,disX,disY,width,height)
@@ -113,6 +126,11 @@ function scaleImage(cxt,img,speedX,speedY){
         height = 40
         disX = arr[index][0]
         disY = arr[index][1]
+        personalImg.push({
+          url: imgUrl,
+          disX: disX,
+          disY: disY
+        })
         cxt.clearRect(0,0,canvas.width,canvas.height)
         render( cxt )
         drawImage(cxt,img)
@@ -126,7 +144,7 @@ function scaleImage(cxt,img,speedX,speedY){
     },10)
 }
 
-function getBacImage(cxt){
+function getBacImage(cxt){               //签到获取背景图
     var xhr = new XMLHttpRequest();
     var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?GetmeetingData&id=402881106487dbbe016487f91e8e0026'
     xhr.open('GET', url, true);
@@ -160,13 +178,14 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
           res = JSON.parse(res)
           console.log('res', res)
           if(res.length>0){
-            var imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
+            imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
+            signId = res[0].id
             console.log('imgUrl', imgUrl)
             imageConfig(cxt,imgUrl)
           }else{
             setTimeout(function(){
               getImageList(cxt)
-            },1000)
+            },2000)
           }
       }
     };
@@ -175,7 +194,7 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
 
 function updatePersonal(cxt){            //动画播放后,更新签到人员信息
     var xhr = new XMLHttpRequest();
-    var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?UpDatameetingSign&id='
+    var url = 'http://www.yixuelin.cn/yixuelin/Meeting.do?UpDatameetingSign&id='+signId
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function() {
       // readyState == 4说明请求已完成
