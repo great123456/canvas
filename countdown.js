@@ -1,8 +1,8 @@
 var WINDOW_WIDTH = 1200;
 var WINDOW_HEIGHT = 768;
-var RADIUS = 40;
-var MARGIN_TOP = 220;
-var MARGIN_LEFT = 150;
+var RADIUS = 39;
+var MARGIN_TOP = 230;
+var MARGIN_LEFT = 100;
 var bacUrl = '';    //背景图
 var bacText = '';   //背景文字
 var arr = []
@@ -10,6 +10,9 @@ var index = 0
 var signId = ''  //签到id
 var personalImg = []    //用于存放所有已签到头像信息
 var imgUrl = ''         //当前签到用户
+var count = 0           //签到人数
+var personalList = []   //初始化已经签到的人员信息
+var indexList = []      //记录已经签到的人员存放位置
 
 var num = 0
 var disX = 500
@@ -28,16 +31,29 @@ window.onload = function(){
     getBacImage(context)
 }
 
-function render( cxt ){
+function render( cxt ){                                //加载初始化信息
     arr = []
     var image = new Image()
     image.src = bacUrl
     cxt.drawImage(image,0,0,canvas.width,canvas.height)
-    renderDigit( MARGIN_LEFT , MARGIN_TOP , 0 , cxt );
-    renderDigit( MARGIN_LEFT+11*RADIUS , MARGIN_TOP , 1 , cxt );
-    renderDigit( MARGIN_LEFT+2*11*RADIUS , MARGIN_TOP , 2 , cxt );
-    renderDigit( MARGIN_LEFT+3*11*RADIUS , MARGIN_TOP , 3 , cxt );
+    renderDigit( MARGIN_LEFT , MARGIN_TOP , 2 , cxt );
+    renderDigit( MARGIN_LEFT+11*RADIUS , MARGIN_TOP , 3 , cxt );
+    renderDigit( MARGIN_LEFT+2*11*RADIUS , MARGIN_TOP , 4 , cxt );
+    renderDigit( MARGIN_LEFT+3*11*RADIUS , MARGIN_TOP , 5 , cxt );
+    console.log('arr', arr.length)
+    if(personalList.length>0){
+      for(var i = 0;i<personalList.length;i++){
+        var preIndex = parseInt(Math.random()*arr.length)
+        indexList.push(preIndex)
+        personalImg.push({
+          url: 'http://www.yixuelin.cn/yixuelin/upload/photo/' + personalList[i].picture,
+          disX: arr[preIndex][0],
+          disY: arr[preIndex][1]
+        })
+      }
+    }
     updatePersonalImg(cxt);
+    personalList = []
     updateText(cxt);
 }
 
@@ -51,6 +67,16 @@ function imageConfig(cxt,url){
       height = 50
       num = 0
       index = parseInt(Math.random()*arr.length)
+      if(indexList.indexOf(index) != -1){
+        index = parseInt(Math.random()*arr.length);
+        if(indexList.indexOf(index) != -1){
+          index = parseInt(Math.random()*arr.length);
+          if(indexList.indexOf(index) != -1){
+            index = parseInt(Math.random()*arr.length);
+          }
+        }
+      }
+      indexList.push(index)
       console.log('index',index,arr[index])
       updateImage(cxt,img);
     }
@@ -63,7 +89,7 @@ function renderDigit( x , y , num , cxt ){
         for(var j = 0 ; j < digit[num][i].length ; j ++ )
             if( digit[num][i][j] == 1 ){
                 cxt.beginPath();
-                cxt.fillRect(x+j*RADIUS,y+i*RADIUS,RADIUS-1,RADIUS-1);
+                cxt.fillRect(x+j*RADIUS,y+i*RADIUS,RADIUS-0.5,RADIUS-0.5);
                 var array = [x+j*RADIUS,y+i*RADIUS]
                 arr.push(array)
                 cxt.closePath();
@@ -71,17 +97,18 @@ function renderDigit( x , y , num , cxt ){
             }
 }
 
-function updateText(cxt){
+function updateText(cxt){                     //更新签到人数
    cxt.font="30px Arial";
-   var text = '共 26 人签到';
+   var text = '共 '+ count +'人签到';
    cxt.fillText(text,260,95);
 }
 
 function updatePersonalImg(cxt){               //重新绘制已签到人员信息
   for(var i = 0;i<personalImg.length;i++){
+    console.log('update-img',personalImg[i])
     var imgobj = new Image()
     imgobj.src = personalImg[i].url
-    cxt.drawImage(imgobj,personalImg[i].disX,personalImg[i].disY,40,40)
+    cxt.drawImage(imgobj,personalImg[i].disX,personalImg[i].disY,RADIUS,RADIUS)
   }
 }
 
@@ -90,7 +117,7 @@ function drawImage(cxt,img){
   cxt.drawImage(img,disX,disY,width,height)
 }
 
-function updateImage(cxt,img){
+function updateImage(cxt,img){                                           //放大
     cxt.clearRect(0,0,canvas.width,canvas.height)
     render( cxt )
     width = width+2
@@ -113,7 +140,7 @@ function updateImage(cxt,img){
     },20)
 }
 
-function scaleImage(cxt,img,speedX,speedY){
+function scaleImage(cxt,img,speedX,speedY){                              //缩小
     cxt.clearRect(0,0,canvas.width,canvas.height)
     render( cxt )
     width = width-5
@@ -122,8 +149,8 @@ function scaleImage(cxt,img,speedX,speedY){
     disX = disX + speedX
     drawImage(cxt,img)
     if(num>=150){
-        width = 40
-        height = 40
+        width = RADIUS
+        height = RADIUS
         disX = arr[index][0]
         disY = arr[index][1]
         personalImg.push({
@@ -131,6 +158,7 @@ function scaleImage(cxt,img,speedX,speedY){
           disX: disX,
           disY: disY
         })
+        count++
         cxt.clearRect(0,0,canvas.width,canvas.height)
         render( cxt )
         drawImage(cxt,img)
@@ -151,10 +179,13 @@ function getBacImage(cxt){               //签到获取背景图
     xhr.onreadystatechange = function() {
       // readyState == 4说明请求已完成
       if (xhr.readyState == 4 && xhr.status == 200) { 
-          console.log('res', xhr.responseText)
           var params = JSON.parse(xhr.responseText)
           bacUrl = 'http://www.yixuelin.cn/yixuelin/upload/qiandao/' + params.bgimg
           bacText = params.bgname
+          count = params.count
+          if(params.list && params.list.length>0){
+            personalList = params.list
+          }
           var image = new Image()
           image.src = bacUrl
           image.onload = function(){
@@ -176,7 +207,6 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
       if (xhr.readyState == 4 && xhr.status == 200) { 
           var res = JSON.parse(xhr.responseText)
           res = JSON.parse(res)
-          console.log('res', res)
           if(res.length>0){
             imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
             signId = res[0].id
@@ -185,7 +215,7 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
           }else{
             setTimeout(function(){
               getImageList(cxt)
-            },2000)
+            },5000)
           }
       }
     };
@@ -199,7 +229,6 @@ function updatePersonal(cxt){            //动画播放后,更新签到人员信
     xhr.onreadystatechange = function() {
       // readyState == 4说明请求已完成
       if (xhr.readyState == 4 && xhr.status == 200) { 
-          console.log('res', xhr.responseText)
           var json = JSON.parse(xhr.responseText)
           getImageList(cxt)
       }
