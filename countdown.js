@@ -13,6 +13,8 @@ var imgUrl = ''         //当前签到用户
 var count = 0           //签到人数
 var personalList = []   //初始化已经签到的人员信息
 var indexList = []      //记录已经签到的人员存放位置
+var name = ''           //当前签到用户名
+var fontSize = 13       //用户名字体大小
 
 var num = 0
 var disX = 500
@@ -98,6 +100,7 @@ function renderDigit( x , y , num , cxt ){
 }
 
 function updateText(cxt){                     //更新签到人数
+   cxt.fillStyle = "#ffffff";
    cxt.font="30px Arial";
    var text = '共 '+ count +'人签到';
    cxt.fillText(text,260,95);
@@ -114,7 +117,7 @@ function updatePersonalImg(cxt){               //重新绘制已签到人员信�
 
 
 function drawImage(cxt,img){
-  cxt.drawImage(img,disX,disY,width,height)
+  cxt.drawImage(img,disX,disY,width,height);
 }
 
 function updateImage(cxt,img){                                           //放大
@@ -124,6 +127,14 @@ function updateImage(cxt,img){                                           //放�
     height = height+2
     disY = disY + 0
     disX = disX - 0.6
+    cxt.fillStyle = "#ffffff";
+    cxt.fillRect(disX-10,disY-10,width+20,height+30);
+    cxt.fillStyle = "#2c2d2f";
+    var textWidth = cxt.measureText(name);
+    var textX = (disX-10) + (width+20-textWidth)/2;
+    fontSize = fontSize + 0.13;
+    cxt.font = fontSize + 'px' + ' ' + 'Arial';
+    cxt.fillText(name, textX, disY+height+10);
     drawImage(cxt,img)
     if(num>=200){
         num = 0
@@ -147,11 +158,19 @@ function scaleImage(cxt,img,speedX,speedY){                              //缩�
     height = height-5
     disY = disY + speedY
     disX = disX + speedX
+    cxt.fillStyle = "#ffffff";
+    cxt.fillRect(disX-5,disY-5,width+10,height+20);
+    cxt.fillStyle = "#2c2d2f";
+    var textWidth = cxt.measureText(name);
+    var textX = (disX-5) + (width+10-textWidth)/2;
+    fontSize = fontSize - 0.15;
+    cxt.font = fontSize + 'px' + ' ' + 'Arial';
+    cxt.fillText(name, textX, disY+height+5);
     drawImage(cxt,img)
     if(num>=150){
-        width = RADIUS
-        height = RADIUS
-        disX = arr[index][0]
+        width = RADIUS-10
+        height = RADIUS-10
+        disX = arr[index][0]+5
         disY = arr[index][1]
         personalImg.push({
           url: imgUrl,
@@ -161,6 +180,14 @@ function scaleImage(cxt,img,speedX,speedY){                              //缩�
         count++
         cxt.clearRect(0,0,canvas.width,canvas.height)
         render( cxt )
+        cxt.fillStyle = "#ffffff";
+        cxt.fillRect(disX-5,disY,width+10,height+10);
+        cxt.fillStyle = "#2c2d2f";
+        var textWidth = cxt.measureText(name);
+        var textX = (disX-5) + (width+10-textWidth)/2;
+        fontSize = 12;
+        cxt.font = fontSize + 'px' + ' ' + 'Arial';
+        cxt.fillText(name, textX, disY+height+3);
         drawImage(cxt,img)
         num = 0
         updatePersonal(cxt)
@@ -210,6 +237,7 @@ function getImageList(cxt){                //(签到未播放动画的人员信�
           if(res.length>0){
             imgUrl = 'http://www.yixuelin.cn/yixuelin/upload/photo/' + res[0].picture
             signId = res[0].id
+            name = res[0].name
             console.log('imgUrl', imgUrl)
             imageConfig(cxt,imgUrl)
           }else{
